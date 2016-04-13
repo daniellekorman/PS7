@@ -1,6 +1,12 @@
-sg.int<-function(g,...,lower,upper)
-
-{ require("SparseGrid")
+sg.int<-function(g, dimension, lower, upper)
+  
+{ 
+  # packages required for this function
+  require("SparseGrid")
+  # for parallel
+  require("plyr")
+  # for unit testing
+  require("testthat")
 
  lower<-floor(lower)
 
@@ -10,7 +16,7 @@ sg.int<-function(g,...,lower,upper)
 
  gridss<-as.matrix(expand.grid(seq(lower[1],upper[1]-1,by=1),seq(lower[2],upper[2]-1,by=1)))
 
- sp.grid <- createIntegrationGrid( 'KPU', dimension=2, k=5 )
+ sp.grid <- createIntegrationGrid( 'KPU', dimension, k=5 )
 
  nodes<-gridss[1,]+sp.grid$nodes
 
@@ -28,4 +34,5 @@ sg.int<-function(g,...,lower,upper)
   gx.sp <- apply(nodes, 1, g,...)
   val.sp <- gx.sp %*%weights
   val.sp
+  system.time(out2 <- laply(sg.int, .parallel=TRUE))
 }
