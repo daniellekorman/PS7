@@ -1,22 +1,28 @@
-sg.int<-function(g, dimension, lower, upper)
+# SparseGrid integration function
+sg.int<-function(g, dim, lower, upper)
   
 { 
   # packages required for this function
+  # for integration
   require("SparseGrid")
   # for parallel
   require("plyr")
-  # for unit testing
-  require("testthat")
 
+  # Creates lower rounded down
  lower<-floor(lower)
-
+  # Creates upper rounded up
  upper<-ceiling(upper)
 
+ # Lengths of lower and upper must be equal
+ test_that("length of lower equals length of upper", {
+   expect_that(length(lower), equals(length(upper)))
+ })
+ # lower must be smaller than upper
  if (any(lower>upper)) stop("lower must be smaller than upper")
-
- gridss<-as.matrix(expand.grid(seq(lower[1],upper[1]-1,by=1),seq(lower[2],upper[2]-1,by=1)))
-
- sp.grid <- createIntegrationGrid( 'KPU', dimension, k=5 )
+ # Creates a matrix of all combinations of numbers in lower/upper sequence
+ gridss<- as.matrix(expand.grid(apply(seq(), rbind(lower, upper-1, by=1))))
+ # Separate grids to get approximation on integral
+ sp.grid <- createIntegrationGrid( 'KPU', dimension=dim, k=5 )
 
  nodes<-gridss[1,]+sp.grid$nodes
 
@@ -31,8 +37,14 @@ sg.int<-function(g, dimension, lower, upper)
 
   }
 
-  gx.sp <- apply(nodes, 1, g,...)
+  system.time(gx.sp <- apply(nodes, 1, g,..., .parallel=TRUE))
   val.sp <- gx.sp %*%weights
   val.sp
-  system.time(out2 <- laply(sg.int, .parallel=TRUE))
-}
+  }
+
+# for unit testing
+require("testthat")
+# for integration
+require("cubature")
+# for testing speed
+require("microbenchmark")
